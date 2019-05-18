@@ -1,2 +1,3 @@
 Manifest-Version: 1.0
 Main-class: com.Server
+Class-Path: lib/json-simple-1.1.1.jar
