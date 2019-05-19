@@ -2,6 +2,7 @@ package com;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Base64;
 import org.json.simple.JSONObject;
@@ -30,6 +31,13 @@ class ClientHandler extends Thread{
         String received; 
         String psw = null;
         int ip_index = 14;
+        String b64enc;
+        byte[] response;
+        String frag;
+        int parte;
+        int offset;
+        int count;
+
         for (int i=13;i<28;i++){
             if (s.toString().charAt(i)==','){
                 ip_index = i;
@@ -83,9 +91,27 @@ class ClientHandler extends Thread{
                         File file = new File(FILEPATH);
                         try {
                             byte[] content = Files.readAllBytes(file.toPath());
+                            System.out.println(content.length);
 
-                            obj.put("file",content);
+                            b64enc = Base64.getEncoder().encodeToString(content);
+                            int tamaño = 65536;
+                            parte = b64enc.length()/tamaño +1;
+                            System.out.println(b64enc.length());
+                            offset=0;
+                            count=0;
                             obj.put("action","get");
+
+                            while (count<parte){
+                                obj.put("parte",count+1);
+                                frag = b64enc.substring(offset,offset+tamaño);
+                                obj.put("file",frag);
+                                response=obj.toJSONString().getBytes(StandardCharsets.UTF_8);
+                                System.out.println(response.length);
+                                System.out.println(obj.toJSONString());
+                                dos.writeInt(response.length);
+                                count++;
+                            }
+                            dos.writeInt(-1);
                         } catch (IOException e) {
                             e.printStackTrace();
                             System.out.println("Error de sistema de archivos. Conexion terminada.");
