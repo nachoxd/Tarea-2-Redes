@@ -7,6 +7,7 @@ import org.json.simple.parser.JSONParser;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Base64;
 import java.util.Iterator;
@@ -23,8 +24,16 @@ public class Client {
             JSONObject message = new JSONObject();
 			JSONParser parser;
             // obtener ip
-            InetAddress ip = InetAddress.getByName("localhost"); 
-      
+            InetAddress ip = InetAddress.getByName("localhost");
+
+            String msg;
+            double largo;
+            int len;
+            int packets;
+            int totalbytes;
+            int position;
+            byte[] buffer;
+
             // establecer conexion con puerto 5000
             Socket s = new Socket(ip, 5000); 
       
@@ -50,25 +59,33 @@ public class Client {
 						System.out.println("Servidor no disponible. Cerrando cliente.");
 						break;
 					}
-					////////////Bloque que maneja excepcion en JSON al cerrar con exit y otros/////////
-        			try{
-						message = (JSONObject)parser.parse(dis.readUTF());
-					}
-        			catch(IOException e){
-						e.printStackTrace();
-						System.out.println("Conexion con servidor terminada.");
-						break;
-					}
+
         			//
         			try{
-						String txt = message.get("action").toString();
-						if(txt.equals("ls")){
+                        len = dis.readInt();
+                        buffer = new byte[len];
+
+
+						if(envio.equals("ls")){
+                            msg = new String(buffer,0,len,StandardCharsets.UTF_8);
+                            message = (JSONObject) parser.parse(msg);
 							ls(message);
 						}
-						else if (txt.equals("get")) {
-							get(message);
+						else if (envio.equals("get")) {
+                            while(len != -1) {
+                                totalbytes = dis.read(buffer, 0, len);
+                                position = totalbytes;
+                                while (totalbytes > 0) {
+                                    totalbytes = dis.read(buffer, position, (len - position));
+                                    if (totalbytes >= 0) position += totalbytes;
+                                }
+                                msg = new String(buffer, 0, len, StandardCharsets.UTF_8);
+                                message = (JSONObject) parser.parse(msg);
+                                get(message);
+                                len = dis.readInt();
+                            }
 						}
-						else if (txt.equals("exit")) {
+						else if (envio.equals("exit")) {
 							s.close();
 							break;
 						}
@@ -78,6 +95,12 @@ public class Client {
 						System.out.println("Comando invalido, intente nuevamente.");
 						//break;
 					}
+                    ////////////Bloque que maneja excepcion en JSON al cerrar con exit y otros///////
+                    catch(IOException e){
+                        e.printStackTrace();
+                        System.out.println("Conexion con servidor terminada.");
+                        break;
+                    }
                 }
         	}
         	else {
@@ -109,11 +132,11 @@ public class Client {
 		byte[] dbase64;
 		FileOutputStream fos;
 		try {
-			System.out.println("holiwis");
 			fos = new FileOutputStream("./prueba1.jpg");
 
 			dbase64 = Base64.getDecoder().decode((String)response.get("file"));
 			fos.write(dbase64);
+			fos.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
