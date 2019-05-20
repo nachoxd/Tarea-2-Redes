@@ -67,11 +67,13 @@ public class Client {
 
 
 						if(envio.equals("ls")){
+						    dis.read(buffer, 0, len);
                             msg = new String(buffer,0,len,StandardCharsets.UTF_8);
                             message = (JSONObject) parser.parse(msg);
 							ls(message);
 						}
 						else if (envio.equals("get")) {
+							String file="";
                             while(len != -1) {
                                 totalbytes = dis.read(buffer, 0, len);
                                 position = totalbytes;
@@ -81,9 +83,12 @@ public class Client {
                                 }
                                 msg = new String(buffer, 0, len, StandardCharsets.UTF_8);
                                 message = (JSONObject) parser.parse(msg);
-                                get(message);
+                                file+= message.get("file").toString();
+
+                                dos.writeInt(1);
                                 len = dis.readInt();
                             }
+                            get(file);
 						}
 						else if (envio.equals("exit")) {
 							s.close();
@@ -91,13 +96,13 @@ public class Client {
 						}
 					}
 					catch(NullPointerException e){
-						e.printStackTrace();
+						//e.printStackTrace();
 						System.out.println("Comando invalido, intente nuevamente.");
 						//break;
 					}
                     ////////////Bloque que maneja excepcion en JSON al cerrar con exit y otros///////
                     catch(IOException e){
-                        e.printStackTrace();
+                        //e.printStackTrace();
                         System.out.println("Conexion con servidor terminada.");
                         break;
                     }
@@ -127,16 +132,48 @@ public class Client {
 		return 1;
 	}
 
+
+	private static int get(String message){
+		byte[] dbase64;
+		File file;
+		FileOutputStream fos;
+		String name;
+		String content;
+		name = "Resultado.jpg";
+		content = message.replace("#","");
+		dbase64 = Base64.getDecoder().decode(content);
+		file = new File(name);
+		try {
+			fos = new FileOutputStream(file);
+			fos.write(dbase64);
+		}
+		catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		return 1;
+	}
+
 	private  static int get(JSONObject response){
 
 		byte[] dbase64;
+		File file;
+		FileWriter writer;
 		FileOutputStream fos;
+		String segment;
+		String name;
+		String name2;
 		try {
-			fos = new FileOutputStream("./prueba1.jpg");
+			name = "./prueba_"+response.get("parte")+".txt";
 
-			dbase64 = Base64.getDecoder().decode((String)response.get("file"));
-			fos.write(dbase64);
-			fos.close();
+			segment = response.get("file").toString();
+//
+			System.out.println((response.get("file").toString().length()));
+			writer = new FileWriter(name);
+			writer.write(response.get("file").toString());
+			writer.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
