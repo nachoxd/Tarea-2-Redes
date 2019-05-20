@@ -19,7 +19,8 @@ class ClientHandler extends Thread{
     final DataOutputStream dos; 
     final Socket s; 
     final String srvpsw = "holasoyunapassword";
-      
+
+    final String[][] lista={{"prueba",".jpg","3","1,2"}};
     // Constructor 
 	public ClientHandler(Socket s, DataInputStream dis, DataOutputStream dos) {
 		this.s = s; 
@@ -40,6 +41,8 @@ class ClientHandler extends Thread{
         int parte;
         int offset;
         int count;
+        String FILEPATH;
+        FileReader fileReader;
 
         for (int i=13;i<28;i++){
             if (s.toString().charAt(i)==','){
@@ -86,6 +89,8 @@ class ClientHandler extends Thread{
                             }
 
                         }
+
+
                         obj.put("action","ls");
                         obj.put("lista",list);
                         response=obj.toJSONString().getBytes(StandardCharsets.UTF_8);
@@ -94,43 +99,31 @@ class ClientHandler extends Thread{
                     }
                     else if (received.equals("get")){
                         try {
-                            String FILEPATH = "./prueba.jpg";
-                            File file = new File(FILEPATH);
-                            byte[] content = Files.readAllBytes(file.toPath());
-                            System.out.println(content.length);
 
-                            b64enc = Base64.getEncoder().encodeToString(content);
-                            float tamano =65536f;
-
-                            parte = (int)Math.ceil(b64enc.length()/tamano);
-                            if (b64enc.length()<tamano*parte){
-
-                                int needed = ((int)tamano*parte)-b64enc.length();
-                                char[] filler = new char[needed];
-                                Arrays.fill(filler, '#');
-                                b64enc+= new String(filler);
-                            }
-                            System.out.println(b64enc.length());
-                            offset=0;
-                            count=0;
+                            FILEPATH = "./prueba";
+                            int cantidad = Integer.parseInt(lista[0][2]);
+                            String type = lista[0][1];
+                            count = 1;
+                            String segment="";
                             obj.put("action","get");
-
-                            while (count<parte){
-                                obj.put("parte",count+1);
-                                frag = b64enc.substring(offset,offset+(int)tamano);
-                                obj.put("file",frag);
-                                //System.out.println("Largo es"+frag.length());
+                            obj.put("name",lista[0][0]+type);
+                            while(count<=cantidad){
+                                fileReader = new FileReader(FILEPATH+"_"+count+".txt");
+                                int i;
+                                while((i=fileReader.read())!=-1){
+                                    segment+=(char)i;
+                                }
+                                obj.put("file",segment);
                                 response=obj.toJSONString().getBytes(StandardCharsets.UTF_8);
-                                System.out.println(response.length);
-                                System.out.println(obj.toJSONString());
                                 dos.writeInt(response.length);
                                 dos.write(response,0,response.length);
                                 dis.readInt();
-                                offset+=tamano;
-
+                                fileReader.close();
+                                segment="";
                                 count++;
                             }
                             dos.writeInt(-1);
+
                         } catch (IOException e) {
                             //e.printStackTrace();
                             System.out.println("Error de sistema de archivos. Conexion terminada.");

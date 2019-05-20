@@ -88,6 +88,7 @@ public class Client {
                                 dos.writeInt(1);
                                 len = dis.readInt();
                             }
+                            dos.writeInt(1);
                             get(file);
 						}
 						else if (envio.equals("exit")) {
@@ -156,7 +157,7 @@ public class Client {
 		return 1;
 	}
 
-	private  static int get(JSONObject response){
+	private  static int put(JSONObject response){
 
 		byte[] dbase64;
 		File file;
@@ -169,10 +170,9 @@ public class Client {
 			name = "./prueba_"+response.get("parte")+".txt";
 
 			segment = response.get("file").toString();
-//
 			System.out.println((response.get("file").toString().length()));
 			writer = new FileWriter(name);
-			writer.write(response.get("file").toString());
+			writer.write(segment);
 			writer.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
