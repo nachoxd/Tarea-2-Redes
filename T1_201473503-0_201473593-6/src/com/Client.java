@@ -47,12 +47,13 @@ public class Client {
 //            message.put("mensaje",dis.readUTF());
         	mensaje = dis.readUTF();
         	if (mensaje.equals("OK")) { //si el password corresponde, se inicia conexion constante
-        		while (true){
+				label:
+				while (true){
 					parser = new JSONParser();
 					System.out.println("Ingrese comando:");
 					System.out.println("ls | get | exit");
-        			envio = user_input.next( );
-        			/////////Bloque que maneja error de escritura cuando crashea servidor/////////////
+					envio = user_input.next( );
+					/////////Bloque que maneja error de escritura cuando crashea servidor/////////////
 					try {
 						dos.writeUTF(envio);
 					} catch (IOException var10) {
@@ -60,40 +61,41 @@ public class Client {
 						break;
 					}
 
-        			//
-        			try{
-                        len = dis.readInt();
-                        buffer = new byte[len];
+					//
+					try{
+						len = dis.readInt();
+						buffer = new byte[len];
 
 
-						if(envio.equals("ls")){
-						    dis.read(buffer, 0, len);
-                            msg = new String(buffer,0,len,StandardCharsets.UTF_8);
-                            message = (JSONObject) parser.parse(msg);
-							ls(message);
-						}
-						else if (envio.equals("get")) {
-							String file="";
-                            while(len != -1) {
-                                totalbytes = dis.read(buffer, 0, len);
-                                position = totalbytes;
-                                while (totalbytes > 0) {
-                                    totalbytes = dis.read(buffer, position, (len - position));
-                                    if (totalbytes >= 0) position += totalbytes;
-                                }
-                                msg = new String(buffer, 0, len, StandardCharsets.UTF_8);
-                                message = (JSONObject) parser.parse(msg);
-                                file+= message.get("file").toString();
+						switch (envio) {
+							case "ls":
+								dis.read(buffer, 0, len);
+								msg = new String(buffer, 0, len, StandardCharsets.UTF_8);
+								message = (JSONObject) parser.parse(msg);
+								ls(message);
+								break;
+							case "get":
+								String file = "";
+								while (len != -1) {
+									totalbytes = dis.read(buffer, 0, len);
+									position = totalbytes;
+									while (totalbytes > 0) {
+										totalbytes = dis.read(buffer, position, (len - position));
+										if (totalbytes >= 0) position += totalbytes;
+									}
+									msg = new String(buffer, 0, len, StandardCharsets.UTF_8);
+									message = (JSONObject) parser.parse(msg);
+									file += message.get("file").toString();
 
-                                dos.writeInt(1);
-                                len = dis.readInt();
-                            }
-                            dos.writeInt(1);
-                            get(file);
-						}
-						else if (envio.equals("exit")) {
-							s.close();
-							break;
+									dos.writeInt(1);
+									len = dis.readInt();
+								}
+								dos.writeInt(1);
+								get(file);
+								break;
+							case "exit":
+								s.close();
+								break label;
 						}
 					}
 					catch(NullPointerException e){
@@ -101,14 +103,14 @@ public class Client {
 						System.out.println("Comando invalido, intente nuevamente.");
 						//break;
 					}
-                    ////////////Bloque que maneja excepcion en JSON al cerrar con exit y otros///////
-                    catch(IOException e){
-                        //e.printStackTrace();
-                        System.out.println("Conexion con servidor terminada.");
-                        break;
-                    }
-                }
-        	}
+					////////////Bloque que maneja excepcion en JSON al cerrar con exit y otros///////
+					catch(IOException e){
+						//e.printStackTrace();
+						System.out.println("Conexion con servidor terminada.");
+						break;
+					}
+				}
+			}
         	else {
         		System.out.println("Password incorrecta, iniciar nueva conexion");
         		s.close();
@@ -123,14 +125,14 @@ public class Client {
             e.printStackTrace(); 
         } 
 	}
-	private static int ls(JSONObject response){
+	private static void ls(JSONObject response){
 		JSONArray files =(JSONArray) response.get("lista");
 		Iterator<String> iterator = files.iterator();
 
 		while (iterator.hasNext()){
 			System.out.println(iterator.next());
 		}
-		return 1;
+
 	}
 
 
@@ -149,10 +151,12 @@ public class Client {
 			fos.write(dbase64);
 		}
 		catch (FileNotFoundException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
+			System.out.println("Archivo no existe");
 		}
 		catch (IOException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
+
 		}
 		return 1;
 	}
@@ -168,7 +172,6 @@ public class Client {
 		String name2;
 		try {
 			name = "./prueba_"+response.get("parte")+".txt";
-
 			segment = response.get("file").toString();
 			System.out.println((response.get("file").toString().length()));
 			writer = new FileWriter(name);
