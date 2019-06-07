@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Base64;
+
 import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
@@ -31,17 +33,20 @@ class ClientHandler extends Thread{
     public void run()  
     {
         JSONObject obj;
-        String received; 
+        String received;
+        JSONObject objreceived;
+        JSONParser parser = new JSONParser();
         String psw = null;
         int ip_index = 14;
         String b64enc;
-        byte[] response;
+        byte[] response, income;
         String frag;
         int parte;
-        int offset;
-        int count;
+        int offset,len;
+        int count, totalbytes;
         String FILEPATH;
         FileReader fileReader;
+        String[] split;
 
         for (int i=13;i<28;i++){
             if (s.toString().charAt(i)==','){
@@ -67,9 +72,18 @@ class ClientHandler extends Thread{
                 try {
                 // Recibir comando de cliente
                 obj = new JSONObject();
-                received = dis.readUTF();
+                len = dis.readInt();
+                income = new byte[len];
+                totalbytes = dis.read(income, 0, len);
+                offset = totalbytes;
+                while (totalbytes > 0) {
+                    totalbytes = dis.read(income, offset, (len - offset));
+                    if (totalbytes >= 0) offset += totalbytes;
+                }
+                received = new String(income, 0, len, StandardCharsets.UTF_8);
+                objreceived = (JSONObject) parser.parse(received);
                 System.out.println("Cliente "+client_ip+" | Input "+received+" recibido");
-                    switch (received) {
+                    switch (objreceived.get("function").toString()) {
                         case "exit":
                 //this.dos.writeUTF("Exit");
                             System.out.println("Cliente " + client_ip + " termina conexion.");
@@ -100,17 +114,19 @@ class ClientHandler extends Thread{
                             break;
                         case "get":
                             try {
-
-                                FILEPATH = "./prueba";
+                                String name = objreceived.get("extra").toString();
+                                FILEPATH = "./"+name;
                                 int cantidad = Integer.parseInt(lista[0][2]);
                                 String type = lista[0][1];
                                 count = 1;
+                                int i;
                                 String segment = "";
                                 obj.put("action", "get");
-                                obj.put("name", lista[0][0] + type);
-                                while (count <= cantidad) {
+//                                obj.put("name", lista[0][0] + type);
+                                obj.put("name", name);
+                                /*while (count <= cantidad) {
                                     fileReader = new FileReader(FILEPATH + "_" + count + ".txt");
-                                    int i;
+
                                     while ((i = fileReader.read()) != -1) {
                                         segment += (char) i;
                                     }
@@ -123,7 +139,20 @@ class ClientHandler extends Thread{
                                     segment = "";
                                     count++;
                                 }
+                                */
+
+                                File file = new File(FILEPATH);
+                                byte[] content = Files.readAllBytes(file.toPath());
+                                b64enc = Base64.getEncoder().encodeToString(content);
+                                obj.put("file", b64enc);
+                                response = obj.toJSONString().getBytes(StandardCharsets.UTF_8);
+                                dos.writeInt(response.length);
+                                dos.write(response, 0, response.length);
+                                dis.readInt();
+
+
                                 dos.writeInt(-1);
+                                dis.readInt();
 
                             } catch (IOException e) {
                 //e.printStackTrace();
@@ -140,9 +169,12 @@ class ClientHandler extends Thread{
                     }
                 }
                 catch (IOException e) {
-                e.printStackTrace();
-                System.out.println("Conexion con cliente " + client_ip + " terminada de forma imprevista, cerrando.");
-                break;
+                    e.printStackTrace();
+                    System.out.println("Conexion con cliente " + client_ip + " terminada de forma imprevista, cerrando.");
+                    break;
+                }
+                catch (ParseException e) {
+                    e.printStackTrace();
                 }
             }
         }

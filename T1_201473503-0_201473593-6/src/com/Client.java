@@ -21,6 +21,8 @@ public class Client {
 			Scanner user_input = new Scanner( System.in );
             final String srvpsw = "holasoyunapassword";
             String mensaje,envio;
+			Scanner scan = new Scanner(System.in);
+			String[] input = new String[2];
             JSONObject message = new JSONObject();
 			JSONParser parser;
             // obtener ip
@@ -52,10 +54,17 @@ public class Client {
 					parser = new JSONParser();
 					System.out.println("Ingrese comando:");
 					System.out.println("ls | get | exit");
-					envio = user_input.next( );
+					input = scan.nextLine().split(" ");
+					envio = input[0];
+					message.put("function",input[0]);
+					message.put("extra",input[1]);
+
+					buffer = message.toJSONString().getBytes(StandardCharsets.UTF_8);
 					/////////Bloque que maneja error de escritura cuando crashea servidor/////////////
 					try {
-						dos.writeUTF(envio);
+						dos.writeInt(buffer.length);
+						dos.write(buffer,0,buffer.length);
+						message.clear();
 					} catch (IOException var10) {
 						System.out.println("Servidor no disponible. Cerrando cliente.");
 						break;
@@ -85,7 +94,7 @@ public class Client {
 									}
 									msg = new String(buffer, 0, len, StandardCharsets.UTF_8);
 									message = (JSONObject) parser.parse(msg);
-									file += message.get("file").toString();
+									file = message.get("file").toString();
 
 									dos.writeInt(1);
 									len = dis.readInt();
@@ -136,13 +145,15 @@ public class Client {
 	}
 
 
+
+
 	private static int get(String message){
 		byte[] dbase64;
 		File file;
 		FileOutputStream fos;
 		String name;
 		String content;
-		name = "Resultado.jpg";
+		name = "Resultado1.jpg";
 		content = message.replace("#","");
 		dbase64 = Base64.getDecoder().decode(content);
 		file = new File(name);
