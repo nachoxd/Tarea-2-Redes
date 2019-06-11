@@ -15,7 +15,7 @@ public class Server {
 		ServerSocket servidor = null;
 		final int puerto = 5000;
 		int ip_index = 14;
-		
+		//holiwi
 		///////////////////////////////////////////////////////////////////
 		
 		//////////////////Aca escucha a clientes y dirige a los threads////////////////////
