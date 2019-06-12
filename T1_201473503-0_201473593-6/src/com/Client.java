@@ -20,7 +20,7 @@ public class Client {
         { 
 			Scanner user_input = new Scanner( System.in );
             final String srvpsw = "holasoyunapassword";
-            String mensaje,envio;
+            String mensaje,envio,complement;
 			Scanner scan = new Scanner(System.in);
 			String[] input = new String[2];
             JSONObject message = new JSONObject();
@@ -54,11 +54,23 @@ public class Client {
 					parser = new JSONParser();
 					System.out.println("Ingrese comando:");
 					System.out.println("ls | get | exit");
-					input = scan.nextLine().split(" ");
+					/////////////////Recibe input y chequea validez/////////////////
+					while (true){
+						input = scan.nextLine().split(" ");
+						if ((input.length == 1)&&((input[0].equals("ls"))||(input[0].equals("exit")))){
+							complement = "null";
+							break;
+						}
+						else if((input.length == 2)&&((input[0].equals("get"))||(input[0].equals("put"))||(input[0].equals("delete"))        )){
+							complement = input[1];
+							break;
+						}
+					}
+					////////////////////////////////////////////////////////////////
 					envio = input[0];
+					System.out.println(input[0]);
 					message.put("function",input[0]);
-					message.put("extra",input[1]);
-
+					message.put("extra",complement);
 					buffer = message.toJSONString().getBytes(StandardCharsets.UTF_8);
 					/////////Bloque que maneja error de escritura cuando crashea servidor/////////////
 					try {
