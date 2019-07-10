@@ -85,9 +85,8 @@ public class Client {
 					//
 					try{
 						len = dis.readInt();
+						/////////////////////////////
 						buffer = new byte[len];
-
-
 						switch (envio) {
 							case "ls":
 								dis.read(buffer, 0, len);
