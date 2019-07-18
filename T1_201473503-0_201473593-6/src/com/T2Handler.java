@@ -22,16 +22,14 @@ class T2Handler extends Thread{
     final DataInputStream dis;
     final DataOutputStream dos;
     final Socket s;
-    final int virtualmach;
     final String srvpsw = "holasoyunapassword";
 
     final String[][] lista={{"prueba",".jpg","3","1,2"}};
     // Constructor
-    public T2Handler(Socket s, DataInputStream dis, DataOutputStream dos, int virtualmach) {
+    public T2Handler(Socket s, DataInputStream dis, DataOutputStream dos) {
         this.s = s;
         this.dis = dis;
         this.dos = dos;
-        this.virtualmach = virtualmach;
     }
 
     @Override
@@ -76,7 +74,7 @@ class T2Handler extends Thread{
         File servers = new File("Servers.txt");
         String st;
         BufferedReader br = null;
-        String [] ServerArray = new String[virtualmach];
+        String [] ServerArray = new String[100];
         try {
             br = new BufferedReader(new FileReader(servers));
             while((st = br.readLine()) != null){
@@ -176,18 +174,19 @@ class T2Handler extends Thread{
                             while (true){ //Ciclo que realiza sucesivas conexiones para obtener las partes
                                 //Version de prueba solo busca el archivo y lo pasa al cliente.
                                 if (PartArray[count]!=null) {
-                                    String tempip = "dist17.inf.santiago.usm.cl";
-                                    InetAddress i = InetAddress.getByName(tempip);
-                                    /////////ACA
-                                    Socket archive_socket = new Socket(i, 6000);
+                                    //String tempip = "192.168.0.5";
+                                    String tempindex = PartArray[count].split("\\|" )[1];
+                                    Socket archive_socket = new Socket(ServerArray[Integer.parseInt(tempindex)-1], 6000);
                                     DataInputStream archive_in = new DataInputStream(archive_socket.getInputStream());
                                     DataOutputStream archive_out = new DataOutputStream(archive_socket.getOutputStream());
                                     //String request = "get".concat("|").concat(PartArray[count].split("|")[0]);
                                     //archive_out.writeUTF(request);
 
                                     //Desde aca empieza a mandar request a cada maquina virtual descargando partes
+                                    String[] tempstringarray = PartArray[count].split("|");
                                     message.put("function", "get");
-                                    message.put("extra", PartArray[count].split("|")[0]);
+                                    System.out.println(PartArray[count].split("\\|")[0]);
+                                    message.put("extra", PartArray[count].split("\\|")[0]);
                                     buffer = message.toJSONString().getBytes(StandardCharsets.UTF_8);
 
                                     //////Aca se envia request a maquina virtual
@@ -305,82 +304,4 @@ class T2Handler extends Thread{
             e.printStackTrace();
         }
     }
-
-    private String get(String file){
-
-        return "";
-    }
-
-//    private  static int put(JSONObject response){
-//
-//        byte[] dbase64;
-//        File file;
-//        FileWriter writer;
-//        FileOutputStream fos;
-//        String segment;
-//        String name;
-//        int parte;
-//        int offset;
-//        int count;
-//
-//        String FILEPATH="";
-//        file = new File(FILEPATH);
-//        byte[] content = Files.readAllBytes(file.toPath());
-//        System.out.println(content.length);
-//
-//        b64enc = Base64.getEncoder().encodeToString(content);
-//        float tamano =65536f;
-//
-//        parte = (int)Math.ceil(b64enc.length()/tamano);
-//        if (b64enc.length()<tamano*parte){
-//
-//            int needed = ((int)tamano*parte)-b64enc.length();
-//            char[] filler = new char[needed];
-//            Arrays.fill(filler, '#');
-//            b64enc+= new String(filler);
-//        }
-//        System.out.println(b64enc.length());
-//        offset=0;
-//        count=0;
-//
-//
-//        while (count<parte){
-//            obj.put("parte",count+1);
-//            frag = b64enc.substring(offset,offset+(int)tamano);
-//            obj.put("file",frag);
-//            //System.out.println("Largo es"+frag.length());
-//            response=obj.toJSONString().getBytes(StandardCharsets.UTF_8);
-//            System.out.println(response.length);
-//            System.out.println(obj.toJSONString());
-//            dos.writeInt(response.length);
-//            dos.write(response,0,response.length);
-//            dis.readInt();
-//            offset+=tamano;
-//
-//            count++;
-//        }
-//        dos.writeInt(-1);
-//
-//
-//        try {
-//            name = "./prueba_"+response.get("parte")+".txt";
-//            name2 = "./prueba_"+response.get("parte")+".jpg";
-//            segment = response.get("file").toString();
-////			dbase64 = Base64.getDecoder().decode(segment.trim());
-////			file = new File(name2);
-////
-////			fos = new FileOutputStream(file);
-////			fos.write(dbase64);
-//            System.out.println((response.get("file").toString().length()));
-//            writer = new FileWriter(name);
-//            writer.write(response.get("file").toString());
-//            writer.close();
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return 1;
-//
-//    }
 }

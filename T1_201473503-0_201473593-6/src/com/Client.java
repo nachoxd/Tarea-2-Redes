@@ -37,7 +37,7 @@ public class Client {
             byte[] buffer;
 
             // establecer conexion con puerto 5000
-            Socket s = new Socket(ip, 5000); 
+            Socket s = new Socket(ip, 5000);
       
             // Obtener input y output streams 
             DataInputStream dis = new DataInputStream(s.getInputStream()); 
@@ -111,7 +111,7 @@ public class Client {
 									len = dis.readInt();
 								}
 								dos.writeInt(1);
-								get(file);
+								get(file,input[1]);
 								break;
 							case "exit":
 								s.close();
@@ -158,16 +158,16 @@ public class Client {
 
 
 
-	private static int get(String message){
+	private static int get(String message, String name){
 		byte[] dbase64;
 		File file;
 		FileOutputStream fos;
-		String name;
+		String[] buff = name.split("\\.");
 		String content;
-		name = "Resultado1.jpg";
+		//name = "Resultado1.jpg";
 		content = message.replace("#","");
 		dbase64 = Base64.getDecoder().decode(content);
-		file = new File(name);
+		file = new File(buff[0].concat("_new.").concat(buff[1]));
 		try {
 			fos = new FileOutputStream(file);
 			fos.write(dbase64);

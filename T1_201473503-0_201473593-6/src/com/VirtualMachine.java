@@ -69,6 +69,7 @@ public class VirtualMachine {
                             case "get":
                                 try {
                                     String name = objreceived.get("extra").toString();
+                                    System.out.println(name);
                                     FILEPATH = "./"+name;
                                     //int cantidad = Integer.parseInt(lista[0][2]);
                                     //String type = lista[0][1];
@@ -92,9 +93,9 @@ public class VirtualMachine {
 
                                     //dos.writeInt(-1);
                                     //dis.readInt();
-
+                                    obj.clear();
                                 } catch (IOException e) {
-                                    //e.printStackTrace();
+                                    e.printStackTrace();
                                     System.out.println("Error de sistema de archivos. Conexion terminada.");
                                     break;
                                 }

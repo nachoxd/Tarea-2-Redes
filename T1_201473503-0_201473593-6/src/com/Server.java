@@ -57,7 +57,7 @@ public class Server {
 	                System.out.println("Asignando nuevo Thread para el cliente");
 
 	                // Se crea nuevo thread con el puerto y los input/output stream
-	                Thread t = new T2Handler(s, dis, dos,input);
+	                Thread t = new T2Handler(s, dis, dos);
 	  
 	                // Invocar metodo start()
 	                t.start();  
